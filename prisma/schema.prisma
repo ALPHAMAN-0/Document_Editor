@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth.js Required Models ───────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts   Account[]
+  sessions   Session[]
+
+  ownedDocuments Document[]           @relation("DocumentOwner")
+  permissions    DocumentPermission[]
+  comments       Comment[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Application Models ────────────────────────────────────────
+
+model Document {
+  id        String  @id @default(cuid())
+  title     String  @default("Untitled Document")
+  ownerId   String
+  owner     User    @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  content     String? @db.Text
+  contentHtml String? @db.Text
+  wordCount   Int     @default(0)
+  coverImage  String?
+  isTemplate  Boolean @default(false)
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  permissions DocumentPermission[]
+  versions    DocumentVersion[]
+  comments    Comment[]
+
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@index([updatedAt])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  content     String  @db.Text
+  title       String
+  createdById String
+  label       String?
+  createdAt   DateTime @default(now())
+
+  @@index([documentId, createdAt])
+  @@map("document_versions")
+}
+
+enum PermissionRole {
+  VIEWER
+  COMMENTER
+  EDITOR
+  ADMIN
+}
+
+model DocumentPermission {
+  id         String         @id @default(cuid())
+  documentId String
+  document   Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       PermissionRole @default(VIEWER)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([documentId, userId])
+  @@index([userId])
+  @@map("document_permissions")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentThread")
+
+  content    String  @db.Text
+  anchorText String?
+  anchorFrom Int?
+  anchorTo   Int?
+
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+
+  isSuggestion  Boolean @default(false)
+  suggestedText String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId, resolved])
+  @@index([parentId])
+  @@map("comments")
+}

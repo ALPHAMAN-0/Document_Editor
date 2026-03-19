@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npx create-next-app@latest document-editor --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --use-npm)",
+      "Bash(rm -rf document-editor)",
+      "Bash(mkdir -p document-editor)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(ls /Users/siam/Desktop/GitHub/Document_Editor/src/app/\\\\\\(app\\\\\\)/dashboard/)",
+      "Bash(npx prisma:*)",
+      "Bash(npx next:*)",
+      "Bash(node -e \":*)"
+    ]
+  }
+}
