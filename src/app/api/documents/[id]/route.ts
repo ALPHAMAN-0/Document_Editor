@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, checkPermission } from "@/lib/auth-helpers";
+import {
+  MAX_WORD_COUNT,
+  isPlainObject,
+  validateDocumentFields,
+} from "@/lib/validation";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -57,24 +62,31 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body: unknown = await request.json().catch(() => null);
+    if (!isPlainObject(body)) {
+      return NextResponse.json(
+        { error: "Request body must be a JSON object" },
+        { status: 400 }
+      );
+    }
 
     const allowedFields = ["title", "content", "contentHtml", "wordCount"] as const;
     const updateData: Record<string, unknown> = {};
 
     for (const field of allowedFields) {
       if (field in body) {
+        const value = body[field];
         if (field === "wordCount") {
-          const wordCount = parseInt(body.wordCount, 10);
-          if (isNaN(wordCount) || wordCount < 0) {
+          const wordCount = parseInt(String(value), 10);
+          if (isNaN(wordCount) || wordCount < 0 || wordCount > MAX_WORD_COUNT) {
             return NextResponse.json(
               { error: "wordCount must be a non-negative integer" },
               { status: 400 }
             );
           }
           updateData[field] = wordCount;
-        } else if (typeof body[field] === "string") {
-          updateData[field] = field === "title" ? body[field].trim() : body[field];
+        } else if (typeof value === "string") {
+          updateData[field] = field === "title" ? value.trim() : value;
         }
       }
     }
@@ -90,6 +102,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json(
         { error: "Title cannot be empty" },
         { status: 400 }
+      );
+    }
+
+    const invalid = validateDocumentFields(updateData);
+    if (invalid) {
+      return NextResponse.json(
+        { error: invalid.error },
+        { status: invalid.status }
       );
     }
 
