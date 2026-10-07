@@ -151,7 +151,7 @@ The application will be available at `http://localhost:3000`.
 | `npm run db:seed` | Seed development data |
 | `npm run db:studio` | Open Prisma Studio |
 | `npm run build` | Production build |
-| `npm run test` | Run Vitest unit tests |
+| `npm run test` | Run unit tests (Node's built-in test runner, needs Node 22.18+) |
 | `npm run test:e2e` | Run Playwright E2E tests |
 | `npm run lint` | ESLint + TypeScript check |
 | `docker compose up -d` | Start PostgreSQL, Redis, MinIO |
