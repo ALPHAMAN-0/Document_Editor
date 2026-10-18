@@ -5,12 +5,15 @@ A Google Docs-style collaborative document editor with real-time multi-user edit
 ## Architecture / How it Works
 
 ```mermaid
-flowchart LR
-    A[User] --> B[Document Editor]
-    B --> C{Logic}
-    C --> D[(Data)]
-    C --> E[Output]
-    D --> C
+flowchart TD
+    App_Router --> API_Routes
+    App_Router --> Editor_UI
+    App_Router --> Layout_UI
+    Editor_UI --> Editor_Store
+    API_Routes --> Prisma_Client
+    Prisma_Client --> Database
+    App_Router --> Auth
+    Auth --> Prisma_Client
 ```
 
 

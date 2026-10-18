@@ -4,9 +4,9 @@
   "private": true,
   "description": "Google Docs-style collaborative document editor",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node init && next dev",
+    "build": "node init && next build",
+    "start": "node init && next start",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
