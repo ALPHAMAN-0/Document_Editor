@@ -2,6 +2,18 @@
 
 A Google Docs-style collaborative document editor with real-time multi-user editing, rich text formatting, and document management.
 
+## Architecture / How it Works
+
+```mermaid
+flowchart LR
+    A[User] --> B[Document Editor]
+    B --> C{Logic}
+    C --> D[(Data)]
+    C --> E[Output]
+    D --> C
+```
+
+
 ## Features
 
 - **Rich Text Editing** -- Full-featured editor with headings, lists, tables, code blocks, images, task lists, text alignment, and syntax highlighting powered by Tiptap v2
