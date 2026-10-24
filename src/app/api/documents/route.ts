@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-helpers";
+import {
+  MAX_PAGE,
+  isPlainObject,
+  parsePositiveInt,
+  validateDocumentFields,
+} from "@/lib/validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,8 +15,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
     const sort = searchParams.get("sort") || "updatedAt";
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
+    const page = parsePositiveInt(searchParams.get("page"), 1, MAX_PAGE);
+    const limit = parsePositiveInt(searchParams.get("limit"), 20, 100);
     const deleted = searchParams.get("deleted") === "true";
 
     const allowedSortFields = ["updatedAt", "createdAt", "title"] as const;
@@ -91,10 +97,19 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body = await request.json().catch(() => ({}));
-    const title = typeof body.title === "string" && body.title.trim()
-      ? body.title.trim()
+    const body: unknown = await request.json().catch(() => null);
+    const rawTitle = isPlainObject(body) ? body.title : undefined;
+    const title = typeof rawTitle === "string" && rawTitle.trim()
+      ? rawTitle.trim()
       : "Untitled Document";
+
+    const invalid = validateDocumentFields({ title });
+    if (invalid) {
+      return NextResponse.json(
+        { error: invalid.error },
+        { status: invalid.status }
+      );
+    }
 
     const document = await prisma.document.create({
       data: {
