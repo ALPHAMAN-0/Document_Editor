@@ -4,9 +4,9 @@
   "private": true,
   "description": "Google Docs-style collaborative document editor",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node init && next dev",
+    "build": "node init && next build",
+    "start": "node init && next start",
     "lint": "next lint",
     "test": "node --import ./tests/setup/register.mjs --test \"tests/*.test.ts\"",
     "db:migrate": "prisma migrate dev",
